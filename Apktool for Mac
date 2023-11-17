@@ -1,0 +1,388 @@
+#!/bin/bash
+clear
+
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+TOOL_DIR="$SCRIPT_DIR/tools"
+INPU_DIR="$SCRIPT_DIR/In"
+OU_DIR="$SCRIPT_DIR/Out"
+DO_DIR="$SCRIPT_DIR/Done"
+
+title_ui() {
+
+  clear
+  echo "#########################################################"
+  echo "#      ___  ______  _   __   _____                _     #"
+  echo "#     / _ \ | ___ \| | / /  |_   _|              | |    #"
+  echo "#    / /_\ \| |_/ /| |/ /     | |    ___    ___  | |    #"
+  echo "#    |  _  ||  __/ |    \     | |   / _ \  / _ \ | |    #"
+  echo "#    | | | || |    | |\  \    | |  | (_) || (_) || |    #"
+  echo "#    \_| |_/\_|    \_| \_/    \_/   \___/  \___/ |_|    #"
+  echo "#                                                       #"
+  echo "#                                      Version 0.1.1    #"
+  echo "#########################################################"
+  echo " "
+}
+
+# --------- Functions ------------
+
+# adb_install
+adb_install() {
+  clear
+  title_ui
+  echo "List of Apk inside In folder :";
+  echo " "
+  var=1;
+  for file in "$DO_DIR"/*; do
+
+    if [ -z "$file" ];
+      then
+        echo "No file found."
+        back_function
+    fi
+
+    path_array[$var]="$file"
+    name_array[$var]="${file##*/}"
+
+
+    echo "$var" "-" ${name_array[$var]};
+    echo " "
+
+
+    var=$((var+1));
+  done
+
+  echo " "
+  echo "Enter the Number of apk to Decompile:"
+
+  read USR_INPUT
+
+  # Install apk
+  clear
+  title_ui
+  echo "Installing apk..."
+  echo " "
+  echo "Log:"
+  echo "----------"
+  adb install "${path_array[$USR_INPUT]}"
+
+
+
+}
+
+# Decompile
+decompile_apk() {
+  clear
+  title_ui
+  echo "List of Apk inside In folder :";
+  echo " "
+  var=1;
+  for file in "$INPU_DIR"/*; do
+
+    if [ -z "$file" ];
+      then
+        echo "No file found."
+        back_function
+    fi
+
+    path_array[$var]="$file"
+    name_array[$var]="${file##*/}"
+
+
+    echo "$var" "-" ${name_array[$var]};
+    echo " "
+
+
+    var=$((var+1));
+  done
+
+  echo " "
+  echo "Enter the Number of apk to Decompile:"
+
+  read USR_INPUT
+
+  # Decompile
+  clear
+
+  # clear
+  command=""
+
+  # select menu
+  decompile_option() {
+    echo "∙--------------------∙"
+    echo "| Select the options |"
+    echo "∙--------------------∙"
+    echo -e "Current options: $command\n"
+    echo -e "(1) - default\n"
+    echo -e "(2) - 기본 디컴파일 중에만 메인 클래스를 디컴파일합니다. (--only-main-classes)\n"
+    echo -e "(3) - 리소스를 디컴파일하지 않습니다. (--no-res)\n"
+    echo -e "(4) - 압축된 리소스를 사용하지 않고 디컴파일합니다. 리소스를 압축 해제하여 디렉터리에 유지합니다. (-s)\n"
+  }
+  decompile_option
+  # input
+  echo "Enter the option number (press Enter to finish): "
+  read CHOISE
+
+  # option select
+  while [ "$CHOISE" != "" ]; do
+    case $CHOISE in
+    1)
+      # default
+      command=""
+      ;;
+    2)
+      # --only-main-classes option
+      if [[ "$command" == *"--only-main-classes"* ]]; then
+        command=$(echo "$command" | sed 's/--only-main-classes//')
+      else
+        command="$command --only-main-classes"
+      fi
+      ;;
+    3)
+      # --no-res option
+      if [[ "$command" == *"--no-res"* ]]; then
+        command=$(echo "$command" | sed 's/--no-res//')
+      else
+        command="$command --no-res"
+      fi
+      ;;
+    4)
+      # -s option
+      if [[ "$command" == *"-s"* ]]; then
+        command=$(echo "$command" | sed 's/-s//')
+      else
+        command="$command -s"
+      fi
+      ;;
+    *)
+    esac
+
+    # input
+    clear
+    decompile_option
+    echo "Enter the option number (press Enter to finish): "
+    read CHOISE
+  done
+  # ~~~
+
+  title_ui
+  echo "Decompiling file..."
+  echo " "
+  echo "Log:"
+  echo "----------"
+  java -jar "$TOOL_DIR/apktool.jar" d -f -r "$command" -o "$OU_DIR/${name_array[$USR_INPUT]}" "${path_array[$USR_INPUT]}"
+}
+
+
+# Recompile
+recompile_apk() {
+  clear
+  title_ui
+  echo "List of Apk for Recompile :";
+  echo " "
+  var=1;
+  for file in "$OU_DIR"/*; do
+
+    if [ -z "$file" ];
+      then
+        echo "No file found."
+        back_function
+    fi
+
+    de_folder_path_array[$var]="$file"
+    de_folder_name_array[$var]="${file##*/}"
+
+
+    echo "$var" "-" ${de_folder_name_array[$var]};
+    echo " "
+
+
+    var=$((var+1));
+  done
+
+  echo " "
+  echo "Enter the Number of apk to Recompile:"
+
+
+  read USR_INPUT
+
+  # Recompile
+  clear
+
+  # code add
+  command=""
+
+  # select option
+  recompile_option() {
+    echo "∙--------------------∙"
+    echo "| Select the options |"
+    echo "∙--------------------∙"
+    echo -e "Current options: $command\n"
+    echo -e "(1) - default\n"
+    echo -e "(2) - AAPT2를 사용합니다. (--use-aapt2)\n"
+    #echo -e "3 - (현재 오류)기존의 서명을 유지합니다. (--keep-original)\n"
+    echo -e "(3) - PNG 파일을 최적화 하지 않습니다. (-nc)\n"
+  }
+  recompile_option
+  # input
+  echo "Enter the option number (press Enter to finish): "
+  read CHOISE
+
+  # select option
+  while [ "$CHOISE" != "" ]; do
+    case $CHOISE in
+    1)
+      # default
+      command=""
+      ;;
+    2)
+      # --use-aapt2 option
+      if [[ "$command" == *"--use-aapt2"* ]]; then
+        command=$(echo "$command" | sed 's/--use-aapt2//')
+      else
+        command="$command --use-aapt2"
+      fi
+      ;;
+    #3)
+    # ---keep-original option
+    #  if [[ "$command" == *"--keep-original"* ]]; then
+    #    command=$(echo "$command" | sed 's/--keep-original//')
+    #  else
+    #    command="$command --keep-original"
+    #  fi
+    #  ;;
+    3)
+      # -nc option
+      if [[ "$command" == *"-nc"* ]]; then
+        command=$(echo "$command" | sed 's/-nc//')
+      else
+        command="$command -nc"
+      fi
+      ;;
+    *)
+    esac
+
+    # input
+    clear
+    recompile_option
+    echo "Enter the option number (press Enter to finish): "
+    read CHOISE
+  done
+  # ~~~
+
+  title_ui
+  echo "Recompiling file..."
+  echo " "
+  echo "Log:"
+  echo "----------"
+  java -jar "$TOOL_DIR/apktool.jar" b -f $command -o "$DO_DIR/${de_folder_name_array[$USR_INPUT]}" -p "$FRAME_DIR" "${de_folder_path_array[$USR_INPUT]}"
+}
+
+#sign_apk
+sign_apk() {
+  clear
+  title_ui
+  #UI Render
+  echo "List of Apk for Sign :";
+  echo " "
+  var=1;
+  for file in "$DO_DIR"/*; do
+
+    if [ -z "$file" ];
+      then
+        echo "No file found."
+        back_function
+    fi
+
+    do_apk_path_array[$var]="$file"
+    do_apk_name_array[$var]="${file##*/}"
+
+
+    echo "$var" "-" ${do_apk_name_array[$var]};
+    echo " "
+
+
+    var=$((var+1));
+  done
+
+  echo " "
+  echo "Enter the Number of apk to Sign:"
+
+
+  read USR_INPUT
+
+  echo ${do_apk_path_array[$USR_INPUT]}
+
+  # Sign
+  clear
+  title_ui
+  echo "Signing file..."
+  echo " "
+  echo "Log:"
+  echo "----------"
+  
+  # zipalign
+  zipalign_path=$(find ~/Library/Android -name "zipalign" -type f)
+  output="${do_apk_path_array[$USR_INPUT]/./_zipa.}"
+  echo "Start Zipalign...."
+  $zipalign_path -f -v 4 "${do_apk_path_array[$USR_INPUT]}" "${output}"
+  echo "Zipalign successful"
+  
+  # signing
+  signing_path=$(find ~/Library/Android -name "apksigner" -type f)
+  echo "Start Signing...."
+  $signing_path sign --key $TOOL_DIR/apkeasytool.pk8 --cert $TOOL_DIR/apkeasytool.pem --v4-signing-enabled false --out $output $output
+  echo "Signing successful"
+}
+
+
+user_interface() {
+title_ui
+
+my_array=(
+  "(1) - Install Apk"
+  " "
+  "(2) - Decompile Files"
+  " "
+  "(3) - Recompile Files"
+  " "
+  "(4) - Sign Files"
+)
+
+printf '%s\n' "${my_array[@]}"
+echo " "
+echo "Make A Choice And Press ENTER:";
+read CHOISE
+
+
+
+case $CHOISE in
+	1)
+		adb_install;;
+	2)
+		decompile_apk;;
+	3)
+		recompile_apk;;
+  4)
+  	sign_apk;;
+	*) exit;;
+esac
+
+}
+
+back_function() {
+  echo " "
+  echo "Enter the 'b' to go back:"
+  read BC_USR_INPUT
+  if [ "$BC_USR_INPUT" = 'b' ]
+    then
+    user_interface;
+  else
+    exit 0
+  fi
+}
+
+user_interface;
+while :
+    do
+        back_function;
+done
