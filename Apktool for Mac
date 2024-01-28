@@ -169,7 +169,7 @@ decompile_apk() {
   echo " "
   echo "Log:"
   echo "----------"
-  java -jar "$TOOL_DIR/apktool.jar" d -f -r "$command" -o "$OU_DIR/${name_array[$USR_INPUT]}" "${path_array[$USR_INPUT]}"
+  java -jar "$TOOL_DIR/apktool.jar" d -f "$command" -o "$OU_DIR/${name_array[$USR_INPUT]}" "${path_array[$USR_INPUT]}"
 }
 
 
@@ -274,7 +274,7 @@ recompile_apk() {
   echo " "
   echo "Log:"
   echo "----------"
-  java -jar "$TOOL_DIR/apktool.jar" b -f $command -o "$DO_DIR/${de_folder_name_array[$USR_INPUT]}" -p "$FRAME_DIR" "${de_folder_path_array[$USR_INPUT]}"
+  java -jar "$TOOL_DIR/apktool.jar" b -f $command -o "$DO_DIR/${de_folder_name_array[$USR_INPUT]}" "${de_folder_path_array[$USR_INPUT]}"
 }
 
 #sign_apk
@@ -324,7 +324,7 @@ sign_apk() {
   zipalign_path=$(find ~/Library/Android -name "zipalign" -type f)
   output="${do_apk_path_array[$USR_INPUT]/./_zipa.}"
   echo "Start Zipalign...."
-  $zipalign_path -f -v 4 "${do_apk_path_array[$USR_INPUT]}" "${output}"
+  $zipalign_path -p 4 "${do_apk_path_array[$USR_INPUT]}" "${output}"
   echo "Zipalign successful"
   
   # signing
